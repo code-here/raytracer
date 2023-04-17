@@ -204,3 +204,58 @@ fn transpose_of_identity_is_identity() {
     let ac = a.clone();
     assert_eq!(a.transpose(), ac);
 }
+
+#[test]
+fn determinant_of_2x2() {
+    // multiplying matrix to a vector
+    let a = Matrix::from([[1.0, 5.0], [-3.0, 2.0]]);
+    assert_eq!(a.det_2x2(), Ok(17.0));
+}
+
+#[test]
+fn test_submatrix_of_4x4() {
+    // multiplying matrix to a vector
+    let a_4x4 = Matrix::from([
+        [1.0, 2.0, 3.0, 4.0],
+        [2.0, 4.0, 4.0, 2.0],
+        [8.0, 6.0, 4.0, 1.0],
+        [0.0, 0.0, 0.0, 1.0],
+    ]);
+    assert_eq!(
+        a_4x4.submatrix(2, 1),
+        Matrix::from([[1.0, 3.0, 4.0], [2.0, 4.0, 2.0], [0.0, 0.0, 1.0],])
+    );
+}
+
+#[test]
+fn test_submatrix_of_3x3() {
+    let a_3x3 = Matrix::from([[1.0, 2.0, 8.0], [2.0, 4.0, 6.0], [3.0, 4.0, 4.0]]);
+    assert_eq!(
+        a_3x3.submatrix(0, 2),
+        Matrix::from([[2.0, 4.0], [3.0, 4.0],])
+    );
+}
+
+#[test]
+fn test_minor_of_3x3() {
+    let a_3x3 = Matrix::from([[1.0, 2.0, 8.0], [2.0, 4.0, 6.0], [3.0, 4.0, 4.0]]);
+    assert_eq!(a_3x3.minor_3x3(1, 0), Ok(-24.0));
+}
+
+#[test]
+fn test_cofactor_of_3x3() {
+    let a_3x3 = Matrix::from([[1.0, 2.0, 8.0], [2.0, 4.0, 6.0], [3.0, 4.0, 4.0]]);
+    assert_eq!(a_3x3.cofactor_3x3(1, 0), Ok(24.0));
+}
+
+#[test]
+fn test_determinant_of_4x4() {
+    // multiplying matrix to a vector
+    let a_4x4 = Matrix::from([
+        [1.0, 2.0, 3.0, 4.0],
+        [2.0, 4.0, 4.0, 2.0],
+        [8.0, 6.0, 4.0, 1.0],
+        [0.0, 0.0, 0.0, 1.0],
+    ]);
+    assert_eq!(a_4x4.det_4x4(), Ok(-20.0));
+}
