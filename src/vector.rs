@@ -17,6 +17,19 @@ impl Point {
     }
 }
 
+impl From<[f64; 4]> for Point {
+    fn from(value: [f64; 4]) -> Self {
+        let [x, y, z, w] = value;
+        Point(x, y, z, w)
+    }
+}
+
+impl From<[f64; 4]> for Vec4 {
+    fn from(value: [f64; 4]) -> Self {
+        let [x, y, z, w] = value;
+        Vec4(x, y, z, w)
+    }
+}
 impl Vec4 {
     pub fn new(x: f64, y: f64, z: f64) -> Self {
         Self(x, y, z, 0.0)

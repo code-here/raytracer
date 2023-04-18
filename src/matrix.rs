@@ -1,12 +1,12 @@
-use std::ops::Mul;
+use std::{cmp::PartialEq, f64::EPSILON, ops::Mul};
 
-use crate::vector::Vec4;
+use crate::vector::{Point, Vec4};
 
-#[derive(Debug, PartialEq, Clone)]
+#[derive(Debug, Clone)]
 pub struct Matrix(pub Vec<Vec<f64>>);
 
 impl Matrix {
-    pub fn identiry_4x4() -> Self {
+    pub fn identity_4x4() -> Self {
         Self(vec![
             vec![1.0, 0.0, 0.0, 0.0],
             vec![0.0, 1.0, 0.0, 0.0],
@@ -54,7 +54,7 @@ impl Matrix {
     }
 
     pub fn det_2x2(&self) -> Result<f64, &str> {
-        if self.rows() != 2 || self.cols() != 2 {
+        if !self.check_size(2) {
             Err("not a 2x2 matrix")
         } else {
             let Self(mat) = self;
@@ -63,7 +63,7 @@ impl Matrix {
     }
 
     pub fn minor_3x3(&self, row: usize, col: usize) -> Result<f64, &str> {
-        if self.rows() != 3 || self.cols() != 3 {
+        if !self.check_size(3) {
             Err("not a 3x3 matrix")
         } else {
             let sub = self.submatrix(row, col);
@@ -72,7 +72,7 @@ impl Matrix {
     }
 
     pub fn cofactor_3x3(&self, row: usize, col: usize) -> Result<f64, &str> {
-        if self.rows() != 3 || self.cols() != 3 {
+        if !self.check_size(3) {
             Err("not a 3x3 matrix")
         } else {
             let minor = self.minor_3x3(row, col)?;
@@ -85,7 +85,7 @@ impl Matrix {
     }
 
     pub fn det_3x3(&self) -> Result<f64, &str> {
-        if self.rows() != 3 || self.cols() != 3 {
+        if !self.check_size(3) {
             Err("not a 3x3 matrix")
         } else {
             let mut det = 0.0;
@@ -97,7 +97,7 @@ impl Matrix {
         }
     }
     pub fn det_4x4(&self) -> Result<f64, &str> {
-        if self.rows() != 4 || self.cols() != 4 {
+        if !self.check_size(4) {
             Err("not a square matrix")
         } else {
             let mut det = 0.0;
@@ -110,6 +110,60 @@ impl Matrix {
             }
             Ok(det)
         }
+    }
+
+    pub fn check_size(&self, size: usize) -> bool {
+        if self.rows() != size || self.cols() != size {
+            false
+        } else {
+            true
+        }
+    }
+
+    pub fn cofactor_4x4(&self, row: usize, col: usize) -> Result<f64, &str> {
+        if !self.check_size(4) {
+            Err("not a 4x4 Matrix")
+        } else {
+            let sub = self.submatrix(row, col);
+            let det = sub.det_3x3().unwrap();
+            if (row + col) % 2 == 0 {
+                Ok(det)
+            } else {
+                Ok(-det)
+            }
+        }
+    }
+
+    /// steps to find inverse
+    /// 1. take the determinant of matrix.
+    /// 2. create a matrix of cofactors
+    /// 3. take the transpose of the cofactor matrix
+    /// 4. divide every elements of transposed matrix with the determinant taken in the first step
+    pub fn inverse_4x4(&self) -> Result<Self, &str> {
+        if !self.check_size(4) {
+            Err("not a 4x4 matrix")
+        } else {
+            let one_by_det = 1.0 / self.det_4x4()?;
+            let mut inverse = Matrix::zero(4, 4);
+            for ridx in 0..4 {
+                for cidx in 0..4 {
+                    inverse.0[ridx][cidx] = self.cofactor_4x4(ridx, cidx)?;
+                }
+            }
+            inverse = inverse.transpose();
+            for ridx in 0..4 {
+                for cidx in 0..4 {
+                    inverse.0[ridx][cidx] = inverse.0[ridx][cidx] * one_by_det;
+                }
+            }
+            Ok(inverse)
+        }
+    }
+
+    pub fn translation_mat_4x4(x: f64, y: f64, z: f64) -> Self {
+        let Self(mut identity) = Self::identity_4x4();
+        (identity[0][3], identity[1][3], identity[2][3]) = (x, y, z);
+        Matrix(identity)
     }
 }
 
@@ -137,6 +191,14 @@ impl From<Vec4> for Matrix {
     }
 }
 
+// create 4x1 matrix from point
+impl From<Point> for Matrix {
+    fn from(value: Point) -> Self {
+        let Point(x, y, z, w) = value;
+        Matrix(vec![vec![x], vec![y], vec![z], vec![w]])
+    }
+}
+
 impl Mul<Matrix> for Matrix {
     type Output = Matrix;
     fn mul(self, rhs: Matrix) -> Self::Output {
@@ -158,5 +220,44 @@ impl Mul<Matrix> for Matrix {
             m12.push(temp);
         }
         Matrix(m12)
+    }
+}
+
+// custom partialeq to compare floting numbers
+impl PartialEq for Matrix {
+    fn eq(&self, other: &Self) -> bool {
+        for ridx in 0..self.rows() {
+            for cidx in 0..self.cols() {
+                // can use less or more zero like  0.000001 or 0.00000000000001 as we want the equation to be accurate
+                if !(f64::abs(self.0[ridx][cidx] - other.0[ridx][cidx]) < 0.00000000001) {
+                    return false;
+                }
+            }
+        }
+        true
+    }
+}
+
+// for multiplying translation matrix to point
+impl Mul<Point> for Matrix {
+    type Output = Point;
+    fn mul(self, rhs: Point) -> Self::Output {
+        let m1 = Matrix::from(rhs);
+        let res = self * m1;
+        let mut point = [0.0; 4];
+        (0..4).for_each(|i| point[i] = res.0[i][0]);
+        Point::from(point)
+    }
+}
+
+// for multiplying translation matrix to vector; should not effect the vector; just writting for tests
+impl Mul<Vec4> for Matrix {
+    type Output = Vec4;
+    fn mul(self, rhs: Vec4) -> Self::Output {
+        let m1 = Matrix::from(rhs);
+        let res = self * m1;
+        let mut vec4 = [0.0; 4];
+        (0..4).for_each(|i| vec4[i] = res.0[i][0]);
+        Vec4::from(vec4)
     }
 }
