@@ -1,10 +1,10 @@
 use std::ops::{Add, Mul, Neg, Sub};
 
 // (x, y, z, w)
-#[derive(Debug, PartialEq, Clone)]
+#[derive(Debug, Clone)]
 pub struct Point(pub f64, pub f64, pub f64, pub f64);
 // we could have made a type alias like type Vec4 = Point but since we need 1.0 for points na 0.0 for vectors in last coordinate
-#[derive(Debug, PartialEq, Clone)]
+#[derive(Debug, Clone)]
 pub struct Vec4(pub f64, pub f64, pub f64, pub f64);
 
 impl Point {
@@ -143,5 +143,35 @@ impl Mul<Vec4> for f64 {
     type Output = Vec4;
     fn mul(self, rhs: Vec4) -> Self::Output {
         Vec4::new(self * rhs.0, self * rhs.1, self * rhs.2)
+    }
+}
+
+impl PartialEq for Point {
+    fn eq(&self, other: &Self) -> bool {
+        let small_value = 0.0000000001;
+        if (self.0 - other.0).abs() < small_value
+            && (self.1 - other.1).abs() < small_value
+            && (self.2 - other.2).abs() < small_value
+            && (self.3 - other.3).abs() < small_value
+        {
+            true
+        } else {
+            false
+        }
+    }
+}
+
+impl PartialEq for Vec4 {
+    fn eq(&self, other: &Self) -> bool {
+        let small_value = 0.0000000001;
+        if (self.0 - other.0).abs() < small_value
+            && (self.1 - other.1).abs() < small_value
+            && (self.2 - other.2).abs() < small_value
+            && (self.3 - other.3).abs() < small_value
+        {
+            true
+        } else {
+            false
+        }
     }
 }

@@ -108,6 +108,8 @@ impl Canvas {
                 .collect::<Vec<_>>(),
         }
     }
+    // the canvas top left corner is (0,0) so from top to down is +ve y  and left to right is +ve x
+    // so if you are drawing from a 4 quadrant coordiante system convert it to above before writing the point to canvas
     pub fn write_pixel(&mut self, position: (usize, usize), color: &Color) {
         let (x, y) = position;
         // check if the point to be drawn is inside canvas
@@ -115,6 +117,20 @@ impl Canvas {
             self.data[y][x] = color.clone();
         }
     }
+
+    // this draws the image upside down since we are substracting canvas height with y coordinate
+    // so bottom left is (0,0)
+    pub fn write_pixel_with_aspect_ratio(&mut self, position: (f64, f64), color: &Color) {
+        let (x, y) = position;
+        let aspect_ratio = self.aspect_ratio();
+        let x = (x * aspect_ratio) as usize;
+        let y = (self.height as f64 - (y * aspect_ratio)) as usize;
+        // check if the point to be drawn is inside canvas
+        if !(y >= self.data.len() || x >= self.data[y].len()) {
+            self.data[y][x] = color.clone();
+        }
+    }
+
     pub fn pixel_at(&self, position: (usize, usize)) -> &Color {
         let (x, y) = position;
         &self.data[y][x]
@@ -131,6 +147,6 @@ impl Canvas {
         ppm
     }
     pub fn aspect_ratio(&self) -> f64 {
-        self.height as f64/ self.width as f64
+        self.height as f64 / self.width as f64
     }
 }

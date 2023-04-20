@@ -34,7 +34,7 @@ impl Projectile {
             tick(self, &env);
         }
 
-        let path = std::path::Path::new(".\\src\\test.ppm");
+        let path = std::path::Path::new(".\\src\\projectile.ppm");
         if !path.exists() {
             std::fs::File::create(&path).unwrap();
         }
@@ -58,4 +58,14 @@ pub fn tick<'a>(proj: &'a mut Projectile, env: &Environment) -> &'a mut Projecti
     proj.position = proj.position.clone() + proj.velocity.clone();
     proj.velocity = proj.velocity.clone() + env.gravity.clone() + env.wind.clone();
     proj
+}
+
+// call this function in main function to create ppm file with projectile
+pub fn draw_projectile_on_ppm_file() {
+    let mut projectile = Projectile::new(
+        Point::new(0.0, 1.0, 0.0),
+        11.25 * Vec4::new(1.0, 1.8, 0.0).normalize(),
+    );
+    let env = Environment::new(Vec4::new(0.0, -0.1, 0.0), Vec4::new(-0.01, 0.0, 0.0));
+    projectile.to_ppm_file(&env, 900, 550, &Color::new(1.0, 0.0, 0.0));
 }

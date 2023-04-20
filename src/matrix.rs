@@ -1,4 +1,4 @@
-use std::{cmp::PartialEq, f64::EPSILON, ops::Mul};
+use std::{cmp::PartialEq, ops::Mul};
 
 use crate::vector::{Point, Vec4};
 
@@ -165,6 +165,78 @@ impl Matrix {
         (identity[0][3], identity[1][3], identity[2][3]) = (x, y, z);
         Matrix(identity)
     }
+
+    pub fn scaling_mat_4x4(x: f64, y: f64, z: f64) -> Self {
+        let Self(mut identity) = Self::identity_4x4();
+        (identity[0][0], identity[1][1], identity[2][2]) = (x, y, z);
+        Matrix(identity)
+    }
+    pub fn rotation_x_mat_4x4(radians: f64) -> Self {
+        let Self(mut identity) = Self::identity_4x4();
+        (
+            identity[1][1],
+            identity[1][2],
+            identity[2][1],
+            identity[2][2],
+        ) = (radians.cos(), -radians.sin(), radians.sin(), radians.cos());
+        Matrix(identity)
+    }
+    pub fn rotation_y_mat_4x4(radians: f64) -> Self {
+        let Self(mut identity) = Self::identity_4x4();
+        (
+            identity[0][0],
+            identity[0][2],
+            identity[2][0],
+            identity[2][2],
+        ) = (radians.cos(), radians.sin(), -radians.sin(), radians.cos());
+        Matrix(identity)
+    }
+    pub fn rotation_z_mat_4x4(radians: f64) -> Self {
+        let Self(mut identity) = Self::identity_4x4();
+        (
+            identity[0][0],
+            identity[0][1],
+            identity[1][0],
+            identity[1][1],
+        ) = (radians.cos(), -radians.sin(), radians.sin(), radians.cos());
+        Matrix(identity)
+    }
+
+    // read it like xy: x propotion to y
+    pub fn shearing(xy: f64, xz: f64, yx: f64, yz: f64, zx: f64, zy: f64) -> Self {
+        let Self(mut identity) = Self::identity_4x4();
+        (
+            identity[0][1],
+            identity[0][2],
+            identity[1][0],
+            identity[1][2],
+            identity[2][0],
+            identity[2][1],
+        ) = (xy, xz, yx, yz, zx, zy);
+        Matrix(identity)
+    }
+
+    pub fn translation_mat_4x4_chain(self, x: f64, y: f64, z: f64) -> Self {
+        Matrix::translation_mat_4x4(x, y, z) * self
+    }
+
+    pub fn scaling_mat_4x4_chain(self, x: f64, y: f64, z: f64) -> Self {
+        Matrix::scaling_mat_4x4(x, y, z) * self
+    }
+    pub fn rotation_x_mat_4x4_chain(self, radians: f64) -> Self {
+        Matrix::rotation_x_mat_4x4(radians) * self
+    }
+    pub fn rotation_y_mat_4x4_chain(self, radians: f64) -> Self {
+        Matrix::rotation_y_mat_4x4(radians) * self
+    }
+    pub fn rotation_z_mat_4x4_chain(self, radians: f64) -> Self {
+        Matrix::rotation_z_mat_4x4(radians) * self
+    }
+
+    // read it like xy: x propotion to y
+    pub fn shearing_chain(self, xy: f64, xz: f64, yx: f64, yz: f64, zx: f64, zy: f64) -> Self {
+        Matrix::shearing(xy, xz, yx, yz, zx, zy) * self
+    }
 }
 
 impl From<[[f64; 4]; 4]> for Matrix {
@@ -242,8 +314,8 @@ impl PartialEq for Matrix {
 impl Mul<Point> for Matrix {
     type Output = Point;
     fn mul(self, rhs: Point) -> Self::Output {
-        let m1 = Matrix::from(rhs);
-        let res = self * m1;
+        let m1 = Matrix::from(rhs.clone());
+        let res = self.clone() * m1.clone();
         let mut point = [0.0; 4];
         (0..4).for_each(|i| point[i] = res.0[i][0]);
         Point::from(point)
@@ -260,4 +332,27 @@ impl Mul<Vec4> for Matrix {
         (0..4).for_each(|i| vec4[i] = res.0[i][0]);
         Vec4::from(vec4)
     }
+}
+
+pub fn clock_to_ppm_file() {
+    use crate::canvas::{Canvas, Color};
+    use std::io::Write;
+
+    let start_point = Point::new(0.0, 100.0, 0.0);
+    let mut canvas = Canvas::new(250, 250);
+    let color = Color::new(1.0, 1.0, 1.0);
+    for hour in 1..=12 {
+        let translation = Matrix::identity_4x4()
+            .rotation_z_mat_4x4_chain(hour as f64 * std::f64::consts::FRAC_PI_6)
+            .translation_mat_4x4_chain(125.0, 125.0, 0.0);
+        let new_point = translation * start_point.clone();
+        canvas.write_pixel_with_aspect_ratio((new_point.0, new_point.1), &color);
+    }
+
+    let path = std::path::Path::new(".\\clock.ppm");
+    if !path.exists() {
+        std::fs::File::create(&path).unwrap();
+    }
+    let mut file = std::fs::OpenOptions::new().write(true).open(path).unwrap();
+    file.write_all(canvas.to_ppm().as_bytes()).unwrap();
 }
