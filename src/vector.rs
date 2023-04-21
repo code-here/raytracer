@@ -76,6 +76,18 @@ impl Add<Vec4> for Point {
     }
 }
 
+impl Add<&Vec4> for &Point {
+    type Output = Point;
+    fn add(self, rhs: &Vec4) -> Self::Output {
+        Point(
+            self.0 + rhs.0,
+            self.1 + rhs.1,
+            self.2 + rhs.2,
+            self.3 + rhs.3,
+        )
+    }
+}
+
 // v1+ v2= v3; here v3 is the resultant/effective vector of v1 and v2
 impl Add<Vec4> for Vec4 {
     type Output = Vec4;
@@ -106,6 +118,18 @@ impl Sub<Vec4> for Point {
 impl Sub<Point> for Point {
     type Output = Vec4;
     fn sub(self, rhs: Point) -> Self::Output {
+        Vec4(
+            self.0 - rhs.0,
+            self.1 - rhs.1,
+            self.2 - rhs.2,
+            self.3 - rhs.3,
+        )
+    }
+}
+
+impl Sub<&Point> for &Point {
+    type Output = Vec4;
+    fn sub(self, rhs: &Point) -> Self::Output {
         Vec4(
             self.0 - rhs.0,
             self.1 - rhs.1,
@@ -146,6 +170,13 @@ impl Mul<Vec4> for f64 {
     }
 }
 
+impl Mul<&Vec4> for f64 {
+    type Output = Vec4;
+    fn mul(self, rhs: &Vec4) -> Self::Output {
+        Vec4::new(self * rhs.0, self * rhs.1, self * rhs.2)
+    }
+}
+
 impl PartialEq for Point {
     fn eq(&self, other: &Self) -> bool {
         let small_value = 0.0000000001;
@@ -173,5 +204,24 @@ impl PartialEq for Vec4 {
         } else {
             false
         }
+    }
+}
+
+impl Mul<f64> for Point {
+    type Output = Point;
+    fn mul(self, rhs: f64) -> Self::Output {
+        Point::new(self.0 + rhs, self.1 + rhs, self.2 + rhs)
+    }
+}
+
+impl AsRef<Vec4> for Vec4 {
+    fn as_ref(&self) -> &Vec4 {
+        self
+    }
+}
+
+impl AsRef<Point> for Point {
+    fn as_ref(&self) -> &Point {
+        self
     }
 }

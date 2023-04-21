@@ -1,6 +1,8 @@
 mod canvas;
 mod matrix;
+mod matters;
 mod projectile;
+mod ray;
 #[cfg(test)]
 mod tests;
 mod vector;
