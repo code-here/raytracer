@@ -34,7 +34,7 @@ impl Projectile {
             tick(self, &env);
         }
 
-        let path = std::path::Path::new(".\\src\\projectile.ppm");
+        let path = std::path::Path::new(".\\projectile.ppm");
         if !path.exists() {
             std::fs::File::create(&path).unwrap();
         }

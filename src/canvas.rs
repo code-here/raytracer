@@ -120,6 +120,7 @@ impl Canvas {
 
     // this draws the image upside down since we are substracting canvas height with y coordinate
     // so bottom left is (0,0)
+    // use this to draw from a normalized world cordinates
     pub fn write_pixel_with_aspect_ratio(&mut self, position: (f64, f64), color: &Color) {
         let (x, y) = position;
         let aspect_ratio = self.aspect_ratio();

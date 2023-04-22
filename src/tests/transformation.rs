@@ -76,7 +76,6 @@ fn rotate_around_z_axis() {
     let half_quarter = Matrix::rotation_z_mat_4x4(std::f64::consts::PI / 4.0);
     let quarter = Matrix::rotation_z_mat_4x4(std::f64::consts::PI / 2.0);
     let p = Point::new(0.0, 1.0, 0.0);
-    dbg!(&half_quarter, &quarter);
     assert_eq!(
         half_quarter * p.clone(),
         Point::new(-2.0_f64.sqrt() * 0.5, 2.0_f64.sqrt() * 0.5, 0.0)

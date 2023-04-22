@@ -322,12 +322,36 @@ impl Mul<Point> for Matrix {
     }
 }
 
-// for multiplying translation matrix to vector; should not effect the vector; just writting for tests
+// for multiplying translation matrix to vector
 impl Mul<Vec4> for Matrix {
     type Output = Vec4;
     fn mul(self, rhs: Vec4) -> Self::Output {
         let m1 = Matrix::from(rhs);
         let res = self * m1;
+        let mut vec4 = [0.0; 4];
+        (0..4).for_each(|i| vec4[i] = res.0[i][0]);
+        Vec4::from(vec4)
+    }
+}
+
+// for multiplying ref translation matrix to ref of point
+impl Mul<&Point> for &Matrix {
+    type Output = Point;
+    fn mul(self, rhs: &Point) -> Self::Output {
+        let m1 = Matrix::from(rhs.clone());
+        let res = self.clone() * m1.clone();
+        let mut point = [0.0; 4];
+        (0..4).for_each(|i| point[i] = res.0[i][0]);
+        Point::from(point)
+    }
+}
+
+// for multiplying ref translation matrix to ref vector
+impl Mul<&Vec4> for &Matrix {
+    type Output = Vec4;
+    fn mul(self, rhs: &Vec4) -> Self::Output {
+        let m1 = Matrix::from(rhs.clone());
+        let res = self.clone() * m1;
         let mut vec4 = [0.0; 4];
         (0..4).for_each(|i| vec4[i] = res.0[i][0]);
         Vec4::from(vec4)
@@ -355,4 +379,10 @@ pub fn clock_to_ppm_file() {
     }
     let mut file = std::fs::OpenOptions::new().write(true).open(path).unwrap();
     file.write_all(canvas.to_ppm().as_bytes()).unwrap();
+}
+
+impl AsRef<Matrix> for Matrix {
+    fn as_ref(&self) -> &Matrix {
+        self
+    }
 }

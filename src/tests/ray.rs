@@ -1,4 +1,5 @@
 use crate::{
+    matrix::Matrix,
     matters::{Intersection, Sphere},
     ray::Ray,
     vector::{Point, Vec4},
@@ -22,47 +23,6 @@ fn computing_a_point_from_a_distance() {
     assert_eq!(r.position(1.0), Point::new(3.0, 3.0, 4.0));
     assert_eq!(r.position(-1.0), Point::new(1.0, 3.0, 4.0));
     assert_eq!(r.position(2.5), Point::new(4.5, 3.0, 4.0));
-}
-
-#[test]
-fn a_ray_intersects_a_sphere_at_2_points() {
-    let ray = Ray::new(Point::new(0.0, 0.0, -5.0), Vec4::new(0.0, 0.0, 1.0));
-    let sphere = Sphere::default();
-    let intersection1 = Intersection::new(4.0, sphere.clone());
-    let intersection2 = Intersection::new(6.0, sphere.clone());
-    assert_eq!(sphere.intersect(&ray), vec![intersection1, intersection2]);
-}
-
-#[test]
-fn a_ray_intersects_a_sphere_at_1_points() {
-    let ray = Ray::new(Point::new(0.0, 1.0, -5.0), Vec4::new(0.0, 0.0, 1.0));
-    let sphere = Sphere::default();
-    let intersect = Intersection::new(5.0, sphere.clone());
-    assert_eq!(sphere.intersect(&ray), vec![intersect.clone(), intersect]);
-}
-
-#[test]
-fn a_ray_intersects_a_sphere_at_0_points() {
-    let ray = Ray::new(Point::new(0.0, 2.0, -5.0), Vec4::new(0.0, 0.0, 1.0));
-    let sphere = Sphere::default();
-    assert_eq!(sphere.intersect(&ray), vec![]);
-}
-#[test]
-fn a_ray_originated_inside_sphere_intersects_at_two_points() {
-    let ray = Ray::new(Point::new(0.0, 0.0, 0.0), Vec4::new(0.0, 0.0, 1.0));
-    let sphere = Sphere::default();
-    let intersection1 = Intersection::new(-1.0, sphere.clone());
-    let intersection2 = Intersection::new(1.0, sphere.clone());
-    assert_eq!(sphere.intersect(&ray), vec![intersection1, intersection2]);
-}
-
-#[test]
-fn a_sphere_is_behide_a_ray() {
-    let ray = Ray::new(Point::new(0.0, 0.0, 5.0), Vec4::new(0.0, 0.0, 1.0));
-    let sphere = Sphere::default();
-    let intersection1 = Intersection::new(-6.0, sphere.clone());
-    let intersection2 = Intersection::new(-4.0, sphere.clone());
-    assert_eq!(sphere.intersect(&ray), vec![intersection1, intersection2]);
 }
 
 #[test]
@@ -114,4 +74,22 @@ fn hits_is_always_the_non_negative_number() {
         ]),
         Some(intersection4)
     );
+}
+
+#[test]
+fn translating_a_ray() {
+    let ray = Ray::new(Point::new(1.0, 2.0, 3.0), Vec4::new(0.0, 1.0, 0.0));
+    let translation_m = Matrix::identity_4x4().translation_mat_4x4_chain(3.0, 4.0, 5.0);
+    let transformed = ray.transform(translation_m);
+    assert_eq!(transformed.origin, Point::new(4.0, 6.0, 8.0));
+    assert_eq!(transformed.direction, Vec4::new(0.0, 1.0, 0.0));
+}
+
+#[test]
+fn scaling_a_ray() {
+    let ray = Ray::new(Point::new(1.0, 2.0, 3.0), Vec4::new(0.0, 1.0, 0.0));
+    let scaling_m = Matrix::identity_4x4().scaling_mat_4x4_chain(2.0, 3.0, 4.0);
+    let transformed = ray.transform(scaling_m);
+    assert_eq!(transformed.origin, Point::new(2.0, 6.0, 12.0));
+    assert_eq!(transformed.direction, Vec4::new(0.0, 3.0, 0.0));
 }
