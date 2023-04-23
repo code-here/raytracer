@@ -61,6 +61,11 @@ impl Vec4 {
         let Vec4(x2, y2, z2, _) = other;
         Self::new(y1 * z2 - z1 * x2, z1 * x2 - x1 * z2, x1 * y2 - y1 * x2)
     }
+    // provide the reflected vector for a input vector in and normal
+    pub fn reflect(&self, normal: &Vec4) -> Self {
+        let input = self;
+        input.as_ref() - (2.0 * input.dot(&normal) * normal).as_ref()
+    }
 }
 
 // p1+ v1-> p2; p1 travels over v1 to get to p2
@@ -152,6 +157,18 @@ impl Sub<Vec4> for Vec4 {
     }
 }
 
+impl Sub<&Vec4> for &Vec4 {
+    type Output = Vec4;
+    fn sub(self, rhs: &Vec4) -> Self::Output {
+        Vec4(
+            self.0 - rhs.0,
+            self.1 - rhs.1,
+            self.2 - rhs.2,
+            self.3 - rhs.3,
+        )
+    }
+}
+
 // vector with it's opposite direction
 impl Neg for Vec4 {
     type Output = Vec4;
@@ -179,7 +196,7 @@ impl Mul<&Vec4> for f64 {
 
 impl PartialEq for Point {
     fn eq(&self, other: &Self) -> bool {
-        let small_value = 0.0000000001;
+        let small_value = 0.00001;
         if (self.0 - other.0).abs() < small_value
             && (self.1 - other.1).abs() < small_value
             && (self.2 - other.2).abs() < small_value
@@ -194,7 +211,7 @@ impl PartialEq for Point {
 
 impl PartialEq for Vec4 {
     fn eq(&self, other: &Self) -> bool {
-        let small_value = 0.0000000001;
+        let small_value = 0.00001;
         if (self.0 - other.0).abs() < small_value
             && (self.1 - other.1).abs() < small_value
             && (self.2 - other.2).abs() < small_value

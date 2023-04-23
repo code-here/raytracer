@@ -1,6 +1,6 @@
 use crate::{
     matrix::Matrix,
-    matters::{Intersection, Sphere},
+    matters::{material::Material, sphere::Sphere, Intersection},
     ray::Ray,
     vector::{Point, Vec4},
 };
@@ -9,7 +9,7 @@ use crate::{
 
 #[test]
 fn default_sphere_has_identity_transformation() {
-    let sphere = Sphere::new();
+    let sphere = Sphere::default();
     assert_eq!(sphere.transformation, Matrix::identity_4x4());
 }
 
@@ -65,10 +65,7 @@ fn a_sphere_is_behide_a_ray_again() {
 
 #[test]
 fn changing_sphere_transformation() {
-    let mut sphere = Sphere::new();
-    sphere.transformation = sphere
-        .transformation
-        .translation_mat_4x4_chain(2.0, 3.0, 4.0);
+    let mut sphere = Sphere::new(Matrix::translation_mat_4x4(2.0, 3.0, 4.0));
     assert_eq!(
         sphere.transformation,
         Matrix::identity_4x4().translation_mat_4x4_chain(2.0, 3.0, 4.0)
@@ -94,4 +91,90 @@ fn intersecting_a_translated_sphere_with_a_ray() {
         .transformation
         .translation_mat_4x4_chain(5.0, 0.0, 0.0);
     assert_eq!(sphere.intersect(&ray), vec![]);
+}
+
+#[test]
+fn normal_on_sphere_at_point_on_x_axis() {
+    let s = Sphere::default();
+    let p = Point::new(1.0, 0.0, 0.0);
+    assert_eq!(s.normal_at(&p), Vec4::new(1.0, 0.0, 0.0));
+}
+#[test]
+fn normal_on_sphere_at_point_on_y_axis() {
+    let s = Sphere::default();
+    let p = Point::new(0.0, 1.0, 0.0);
+    assert_eq!(s.normal_at(&p), Vec4::new(0.0, 1.0, 0.0));
+}
+#[test]
+fn normal_on_sphere_at_point_on_z_axis() {
+    let s = Sphere::default();
+    let p = Point::new(0.0, 0.0, 1.0);
+    assert_eq!(s.normal_at(&p), Vec4::new(0.0, 0.0, 1.0));
+}
+#[test]
+fn normal_on_sphere_at_nonaxial_point() {
+    let s = Sphere::default();
+    let p = Point::new(
+        3.0f64.sqrt() / 3.0,
+        3.0f64.sqrt() / 3.0,
+        3.0f64.sqrt() / 3.0,
+    );
+    assert_eq!(
+        s.normal_at(&p),
+        Vec4::new(
+            3.0f64.sqrt() / 3.0,
+            3.0f64.sqrt() / 3.0,
+            3.0f64.sqrt() / 3.0
+        )
+    );
+}
+#[test]
+fn normal_is_normalized_vector() {
+    let s = Sphere::default();
+    let p = Point::new(
+        3.0f64.sqrt() / 3.0,
+        3.0f64.sqrt() / 3.0,
+        3.0f64.sqrt() / 3.0,
+    );
+    assert_eq!(
+        s.normal_at(&p),
+        Vec4::new(
+            3.0f64.sqrt() / 3.0,
+            3.0f64.sqrt() / 3.0,
+            3.0f64.sqrt() / 3.0,
+        )
+        .normalize()
+    );
+}
+
+#[test]
+fn normal_on_a_translated_sphere() {
+    let s = Sphere::new(Matrix::translation_mat_4x4(0.0, 1.0, 0.0));
+    let p = Point::new(0.0, 1.70711, -0.70711);
+    assert_eq!(s.normal_at(&p), Vec4::new(0.0, 0.70711, -0.70711,));
+}
+#[test]
+fn normal_on_a_transformed_sphere() {
+    let s = Sphere::new(
+        Matrix::identity_4x4()
+            .rotation_z_mat_4x4_chain(std::f64::consts::PI / 5.0)
+            .scaling_mat_4x4_chain(1.0, 0.5, 1.0),
+    );
+    let p = Point::new(0.0, 2.0f64.sqrt() / 2.0, -2.0f64.sqrt() / 2.0);
+    assert_eq!(s.normal_at(&p), Vec4::new(0.0, 0.97014, -0.24253));
+}
+
+#[test]
+fn a_sphere_has_a_default_material() {
+    let sphere = Sphere::default();
+    assert_eq!(sphere.material, Material::default());
+}
+
+#[test]
+fn a_sphere_maybe_assigned_a_material() {
+    let mut sphere = Sphere::default();
+    let mut material = Material::default();
+    material.ambient = 1.0;
+    sphere.material = material.clone();
+    assert_eq!(sphere.material, material);
 }

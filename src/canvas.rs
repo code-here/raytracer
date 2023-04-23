@@ -1,7 +1,7 @@
 use std::ops::{Add, Mul, Sub};
 
 // forth value for alpha value
-#[derive(Debug, Clone, PartialEq)]
+#[derive(Debug, Clone)]
 pub struct Color(f64, f64, f64, f64);
 
 impl Color {
@@ -9,8 +9,13 @@ impl Color {
         Self(r, g, b, 1.0)
     }
     pub fn black() -> Self {
-        Self(0.0, 0.0, 0.0, 0.0)
+        Self(0.0, 0.0, 0.0, 1.0)
     }
+
+    pub fn white() -> Self {
+        Self(1.0, 1.0, 1.0, 1.0)
+    }
+
     pub fn red(&self) -> f64 {
         self.0
     }
@@ -92,6 +97,34 @@ impl Mul<Color> for Color {
     }
 }
 
+impl Add<&Color> for &Color {
+    type Output = Color;
+    fn add(self, rhs: &Color) -> Self::Output {
+        Color(self.0 + rhs.0, self.1 + rhs.1, self.2 + rhs.2, 1.0)
+    }
+}
+
+impl Sub<&Color> for &Color {
+    type Output = Color;
+    fn sub(self, rhs: &Color) -> Self::Output {
+        Color(self.0 - rhs.0, self.1 - rhs.1, self.2 - rhs.2, 1.0)
+    }
+}
+
+impl Mul<&Color> for f64 {
+    type Output = Color;
+    fn mul(self, rhs: &Color) -> Self::Output {
+        Color(self * rhs.0, self * rhs.1, self * rhs.2, 1.0)
+    }
+}
+
+impl Mul<&Color> for &Color {
+    type Output = Color;
+    fn mul(self, rhs: &Color) -> Self::Output {
+        Color(self.0 * rhs.0, self.1 * rhs.1, self.2 * rhs.2, 1.0)
+    }
+}
+
 pub struct Canvas {
     pub width: u64,
     pub height: u64,
@@ -149,5 +182,26 @@ impl Canvas {
     }
     pub fn aspect_ratio(&self) -> f64 {
         self.height as f64 / self.width as f64
+    }
+}
+
+impl AsRef<Color> for Color {
+    fn as_ref(&self) -> &Color {
+        self
+    }
+}
+
+impl PartialEq for Color {
+    fn eq(&self, other: &Self) -> bool {
+        let small_value = 0.00001;
+        if (self.0 - other.0).abs() < small_value
+            && (self.1 - other.1).abs() < small_value
+            && (self.2 - other.2).abs() < small_value
+            && (self.3 - other.3).abs() < small_value
+        {
+            true
+        } else {
+            false
+        }
     }
 }

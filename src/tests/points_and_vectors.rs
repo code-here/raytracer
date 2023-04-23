@@ -52,3 +52,17 @@ fn negeting_a_vector() {
     let v1 = Vec4::new(3.0, 2.0, 1.0);
     assert_eq!(Vec4::new(-3.0, -2.0, -1.0), -v1);
 }
+
+#[test]
+fn reflect_a_vector_approching_at_45_degrees() {
+    let input = Vec4::new(1.0, -1.0, 0.0);
+    let normal = Vec4::new(0.0, 1.0, 0.0);
+    assert_eq!(input.reflect(&normal), Vec4::new(1.0, 1.0, 0.0))
+}
+
+#[test]
+fn reflect_a_vector_off_a_slanted_surface() {
+    let input = Vec4::new(0.0, -1.0, 0.0);
+    let normal = Vec4::new(2.0f64.sqrt() / 2.0, 2.0f64.sqrt() / 2.0, 0.0);
+    assert_eq!(input.reflect(&normal), Vec4::new(1.0, 0.0, 0.0))
+}
