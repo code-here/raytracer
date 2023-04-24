@@ -6,3 +6,4 @@ mod points_and_vectors;
 mod ray;
 mod sphere;
 mod transformation;
+mod world;

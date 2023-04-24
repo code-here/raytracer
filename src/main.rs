@@ -6,6 +6,7 @@ mod ray;
 #[cfg(test)]
 mod tests;
 mod vector;
+mod world;
 
 fn main() {
     // projectile::draw_projectile_on_ppm_file();

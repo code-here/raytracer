@@ -7,7 +7,7 @@ use crate::{
     vector::{Point, Vec4},
 };
 
-use super::{light::Light, material::Material, Intersection, Matter};
+use super::{light::Light, material::Material, Intersection, Object};
 
 /// NOTES:
 /// 1. to bring some point/vector from world space to object space multiply the inverse of transformation matrix of object(sphere) with the point/vector i.e transformation.inverse() * point/vector
@@ -198,7 +198,7 @@ impl Default for Sphere {
     }
 }
 
-impl Matter for Sphere {}
+impl Object for Sphere {}
 
 pub struct Wall {
     z: f64,

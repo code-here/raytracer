@@ -4,15 +4,15 @@ pub mod light;
 pub mod material;
 pub mod sphere;
 
-pub trait Matter: PartialEq {}
+pub trait Object {}
 
 #[derive(Debug, Clone)]
-pub struct Intersection<T: Matter + Clone> {
+pub struct Intersection<T: Object + Clone> {
     pub distance: f64,
     pub object: T,
 }
 
-impl<T: Matter + Clone> Intersection<T> {
+impl<T: Object + Clone> Intersection<T> {
     pub fn new(distance: f64, object: T) -> Self {
         Self { distance, object }
     }
@@ -32,7 +32,7 @@ impl<T: Matter + Clone> Intersection<T> {
     }
 }
 
-impl<T: Matter + Clone> Ord for Intersection<T> {
+impl<T: Object + Clone> Ord for Intersection<T> {
     fn cmp(&self, other: &Self) -> Ordering {
         if self.distance == other.distance {
             Ordering::Equal
@@ -44,7 +44,7 @@ impl<T: Matter + Clone> Ord for Intersection<T> {
     }
 }
 
-impl<T: Matter + Clone> PartialOrd for Intersection<T> {
+impl<T: Object + Clone> PartialOrd for Intersection<T> {
     fn partial_cmp(&self, other: &Self) -> Option<Ordering> {
         if self.distance == other.distance {
             Some(Ordering::Equal)
@@ -56,10 +56,10 @@ impl<T: Matter + Clone> PartialOrd for Intersection<T> {
     }
 }
 
-impl<T: Matter + Clone> PartialEq for Intersection<T> {
+impl<T: Object + Clone> PartialEq for Intersection<T> {
     fn eq(&self, other: &Self) -> bool {
         self.distance == other.distance
     }
 }
 
-impl<T: Matter + Clone> Eq for Intersection<T> {}
+impl<T: Object + Clone> Eq for Intersection<T> {}
