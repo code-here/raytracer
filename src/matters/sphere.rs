@@ -7,7 +7,7 @@ use crate::{
     vector::{Point, Vec4},
 };
 
-use super::{light::Light, material::Material, Intersection, Object};
+use super::{light::Light, material::Material, Intersectable, Intersection, PrerareComputation};
 
 /// NOTES:
 /// 1. to bring some point/vector from world space to object space multiply the inverse of transformation matrix of object(sphere) with the point/vector i.e transformation.inverse() * point/vector
@@ -99,7 +99,7 @@ impl Sphere {
                 if intersections.is_empty() {
                     canvas.write_pixel((x as usize, y as usize), &black);
                 } else {
-                    if Intersection::hits(&intersections).is_some() {
+                    if Sphere::hits(&intersections).is_some() {
                         canvas.write_pixel((x as usize, y as usize), &red);
                     }
                 }
@@ -164,7 +164,7 @@ impl Sphere {
                 if intersections.is_empty() {
                     canvas.write_pixel((x as usize, y as usize), &black);
                 } else {
-                    if let Some(mut hit) = Intersection::hits(&intersections) {
+                    if let Some(mut hit) = Sphere::hits(&intersections) {
                         let point = ray.position(hit.distance);
                         let normal_vector = hit.object.normal_at(&point);
                         let eye_vector = -ray.direction;
@@ -198,10 +198,39 @@ impl Default for Sphere {
     }
 }
 
-impl Object for Sphere {}
-
 pub struct Wall {
     z: f64,
     width: f64,
     height: f64,
+}
+
+impl Intersectable for Sphere {
+    fn hits(intersections: &[Intersection<Sphere>]) -> Option<Intersection<Sphere>> {
+        // if distance is negative than the object is behind the ray so exclude those intersections in hits
+        let mut positive_intersections = intersections
+            .iter()
+            .filter(|&i| i.distance >= 0.0)
+            .collect::<Vec<&Intersection<Sphere>>>();
+        if positive_intersections.is_empty() {
+            // if objects are not in front of ray
+            None
+        } else {
+            positive_intersections.sort();
+            Some(positive_intersections[0].clone())
+        }
+    }
+
+    fn prepare_computation(
+        intersection: &Intersection<Sphere>,
+        ray: &Ray,
+    ) -> PrerareComputation<Sphere> {
+        let point = ray.position(intersection.distance);
+        PrerareComputation {
+            distance: intersection.distance,
+            normalv: Sphere::normal_at(&intersection.object, &point),
+            object: intersection.object.clone(),
+            point,
+            eyev: -ray.direction.clone(),
+        }
+    }
 }

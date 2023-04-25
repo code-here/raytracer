@@ -65,7 +65,7 @@ fn a_sphere_is_behide_a_ray_again() {
 
 #[test]
 fn changing_sphere_transformation() {
-    let mut sphere = Sphere::new(Matrix::translation_mat_4x4(2.0, 3.0, 4.0));
+    let sphere = Sphere::new(Matrix::translation_mat_4x4(2.0, 3.0, 4.0));
     assert_eq!(
         sphere.transformation,
         Matrix::identity_4x4().translation_mat_4x4_chain(2.0, 3.0, 4.0)

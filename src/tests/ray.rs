@@ -1,6 +1,6 @@
 use crate::{
     matrix::Matrix,
-    matters::{sphere::Sphere, Intersection},
+    matters::{sphere::Sphere, Intersectable, Intersection},
     ray::Ray,
     vector::{Point, Vec4},
 };
@@ -31,7 +31,7 @@ fn hits_when_all_intersections_are_positive_distance() {
     let intersection1 = Intersection::new(1.0, sphere.clone());
     let intersection2 = Intersection::new(2.0, sphere.clone());
     assert_eq!(
-        Intersection::hits(&vec![intersection1.clone(), intersection2]),
+        Sphere::hits(&vec![intersection1.clone(), intersection2]),
         Some(intersection1)
     );
 }
@@ -42,7 +42,7 @@ fn hits_when_some_intersections_have_negative_distance() {
     let intersection1 = Intersection::new(-1.0, sphere.clone());
     let intersection2 = Intersection::new(1.0, sphere.clone());
     assert_eq!(
-        Intersection::hits(&vec![intersection1, intersection2.clone()]),
+        Sphere::hits(&vec![intersection1, intersection2.clone()]),
         Some(intersection2)
     );
 }
@@ -53,7 +53,7 @@ fn hits_when_all_intersections_are_negative_distance() {
     let intersection1 = Intersection::new(-1.0, sphere.clone());
     let intersection2 = Intersection::new(-2.0, sphere.clone());
     assert_eq!(
-        Intersection::hits(&vec![intersection1.clone(), intersection2]),
+        Sphere::hits(&vec![intersection1.clone(), intersection2]),
         None
     );
 }
@@ -66,7 +66,7 @@ fn hits_is_always_the_non_negative_number() {
     let intersection3 = Intersection::new(-3.0, sphere.clone());
     let intersection4 = Intersection::new(2.0, sphere.clone());
     assert_eq!(
-        Intersection::hits(&vec![
+        Sphere::hits(&vec![
             intersection1,
             intersection2,
             intersection3,
@@ -92,4 +92,17 @@ fn scaling_a_ray() {
     let transformed = ray.transform(scaling_m);
     assert_eq!(transformed.origin, Point::new(2.0, 6.0, 12.0));
     assert_eq!(transformed.direction, Vec4::new(0.0, 3.0, 0.0));
+}
+
+#[test]
+fn precomputing_the_state_of_an_intersection() {
+    let ray = Ray::new(Point::new(0.0, 0.0, -5.0), Vec4::new(0.0, 0.0, 1.0));
+    let sphere = Sphere::default();
+    let intersection = Intersection::new(4.0, sphere);
+    let comp = Sphere::prepare_computation(&intersection, &ray);
+    assert_eq!(intersection.distance, comp.distance);
+    assert_eq!(intersection.object, comp.object);
+    assert_eq!(Point::new(0.0, 0.0, -1.0), comp.point);
+    assert_eq!(Vec4::new(0.0, 0.0, -1.0), comp.eyev);
+    assert_eq!(Vec4::new(0.0, 0.0, -1.0), comp.normalv);
 }
