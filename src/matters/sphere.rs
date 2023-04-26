@@ -225,12 +225,20 @@ impl Intersectable for Sphere {
         ray: &Ray,
     ) -> PrerareComputation<Sphere> {
         let point = ray.position(intersection.distance);
+        let normalv = Sphere::normal_at(&intersection.object, &point);
+        let eyev = -ray.direction.clone();
+        let (normalv, inside) = if normalv.dot(&eyev) < 0.0 {
+            (-normalv, true)
+        } else {
+            (normalv, false)
+        };
         PrerareComputation {
             distance: intersection.distance,
-            normalv: Sphere::normal_at(&intersection.object, &point),
+            normalv,
             object: intersection.object.clone(),
             point,
-            eyev: -ray.direction.clone(),
+            eyev,
+            inside,
         }
     }
 }

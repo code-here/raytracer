@@ -106,3 +106,25 @@ fn precomputing_the_state_of_an_intersection() {
     assert_eq!(Vec4::new(0.0, 0.0, -1.0), comp.eyev);
     assert_eq!(Vec4::new(0.0, 0.0, -1.0), comp.normalv);
 }
+
+#[test]
+fn the_hit_when_an_intersection_occurs_on_the_outside() {
+    let ray = Ray::new(Point::new(0.0, 0.0, -5.0), Vec4::new(0.0, 0.0, 1.0));
+    let sphere = Sphere::default();
+    let intersection = Intersection::new(4.0, sphere);
+    let comp = Sphere::prepare_computation(&intersection, &ray);
+    assert!(!comp.inside);
+}
+
+#[test]
+fn the_hit_when_an_intersection_occurs_on_the_inside() {
+    let ray = Ray::new(Point::new(0.0, 0.0, 0.0), Vec4::new(0.0, 0.0, 1.0));
+    let sphere = Sphere::default();
+    let intersection = Intersection::new(1.0, sphere);
+    let comp = Sphere::prepare_computation(&intersection, &ray);
+    assert!(comp.inside);
+    assert_eq!(Point::new(0.0, 0.0, 1.0), comp.point);
+    assert_eq!(Vec4::new(0.0, 0.0, -1.0), comp.eyev);
+    // normal would have been (0, 0, 1), but is inverted!
+    assert_eq!(Vec4::new(0.0, 0.0, -1.0), comp.normalv);
+}

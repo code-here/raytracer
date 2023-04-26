@@ -59,7 +59,7 @@ impl Vec4 {
     pub fn cross(&self, other: &Vec4) -> Vec4 {
         let Vec4(x1, y1, z1, _) = self;
         let Vec4(x2, y2, z2, _) = other;
-        Self::new(y1 * z2 - z1 * x2, z1 * x2 - x1 * z2, x1 * y2 - y1 * x2)
+        Self::new(y1 * z2 - z1 * y2, z1 * x2 - x1 * z2, x1 * y2 - y1 * x2)
     }
     // provide the reflected vector for a input vector in and normal
     pub fn reflect(&self, normal: &Vec4) -> Self {

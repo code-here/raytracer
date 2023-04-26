@@ -237,6 +237,20 @@ impl Matrix {
     pub fn shearing_chain(self, xy: f64, xz: f64, yx: f64, yz: f64, zx: f64, zy: f64) -> Self {
         Matrix::shearing(xy, xz, yx, yz, zx, zy) * self
     }
+    // from: eye position, to: place where to look, up: up direction
+    pub fn view_transformation(from: Point, to: Point, up: Vec4) -> Self {
+        let forward = (&to - &from).normalize();
+        let upn = up.normalize();
+        let left = forward.cross(&upn);
+        let true_up = left.cross(&forward);
+        let orientation = Matrix::from([
+            [left.0, left.1, left.2, 0.0],
+            [true_up.0, true_up.1, true_up.2, 0.0],
+            [-forward.0, -forward.1, -forward.2, 0.0],
+            [0.0, 0.0, 0.0, 1.0],
+        ]);
+        orientation * Matrix::translation_mat_4x4(-from.0, -from.1, -from.2)
+    }
 }
 
 impl From<[[f64; 4]; 4]> for Matrix {
@@ -301,7 +315,7 @@ impl PartialEq for Matrix {
         for ridx in 0..self.rows() {
             for cidx in 0..self.cols() {
                 // can use less or more zero like  0.000001 or 0.00000000000001 as we want the equation to be accurate
-                if !(f64::abs(self.0[ridx][cidx] - other.0[ridx][cidx]) < 0.00000000001) {
+                if !(f64::abs(self.0[ridx][cidx] - other.0[ridx][cidx]).abs() < 0.00001) {
                     return false;
                 }
             }

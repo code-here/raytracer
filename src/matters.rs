@@ -26,6 +26,8 @@ pub struct PrerareComputation<T: Clone> {
     pub eyev: Vec4,
     // normal at intersection point
     pub normalv: Vec4,
+    // if a normal is inside object or outside
+    pub inside: bool,
 }
 
 pub trait Intersectable: Clone {
