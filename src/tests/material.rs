@@ -25,7 +25,8 @@ fn lighting_with_eye_between_the_light_and_surface() {
             &light,
             &Point::new(0.0, 0.0, 0.0),
             &eye_vector,
-            &normal_vector
+            &normal_vector,
+            false,
         ),
         Color::new(1.9, 1.9, 1.9)
     );
@@ -42,7 +43,8 @@ fn lighting_with_eye_between_the_light_and_surface_with_eye_offset_45_deg() {
             &light,
             &Point::new(0.0, 0.0, 0.0),
             &eye_vector,
-            &normal_vector
+            &normal_vector,
+            false,
         ),
         Color::new(1.0, 1.0, 1.0)
     );
@@ -59,7 +61,8 @@ fn lighting_with_eye_opposite_surface_with_light_offset_45_deg() {
             &light,
             &Point::new(0.0, 0.0, 0.0),
             &eye_vector,
-            &normal_vector
+            &normal_vector,
+            false,
         ),
         Color::new(0.7364, 0.7364, 0.7364)
     );
@@ -76,7 +79,8 @@ fn lighting_with_eye_in_path_of_the_reflection_vector() {
             &light,
             &Point::new(0.0, 0.0, 0.0),
             &eye_vector,
-            &normal_vector
+            &normal_vector,
+            false,
         ),
         Color::new(1.6364, 1.6364, 1.6364)
     );
@@ -93,7 +97,26 @@ fn lighting_with_light_behind_the_surface() {
             &light,
             &Point::new(0.0, 0.0, 0.0),
             &eye_vector,
-            &normal_vector
+            &normal_vector,
+            false,
+        ),
+        Color::new(0.1, 0.1, 0.1)
+    );
+}
+
+#[test]
+fn lighting_with_the_surface_in_shadow() {
+    let eye_vector = Vec4::new(0.0, 0.0, -1.0);
+    let normal_vector = Vec4::new(0.0, 0.0, -1.0);
+    let light = Light::new(Point::new(0.0, 0.0, -10.0), Color::white());
+    let mut material = Material::default();
+    assert_eq!(
+        material.lighting(
+            &light,
+            &Point::new(0.0, 0.0, 0.0),
+            &eye_vector,
+            &normal_vector,
+            true
         ),
         Color::new(0.1, 0.1, 0.1)
     );

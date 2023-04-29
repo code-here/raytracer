@@ -173,6 +173,7 @@ impl Sphere {
                             &point,
                             &eye_vector,
                             &normal_vector,
+                            false,
                         );
                         canvas.write_pixel((x as usize, y as usize), &lighting);
                     }
@@ -232,6 +233,7 @@ impl Intersectable for Sphere {
         } else {
             (normalv, false)
         };
+        let over_point = &point + &(0.000000001 * &normalv);
         PrerareComputation {
             distance: intersection.distance,
             normalv,
@@ -239,6 +241,7 @@ impl Intersectable for Sphere {
             point,
             eyev,
             inside,
+            over_point,
         }
     }
 }

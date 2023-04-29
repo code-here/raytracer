@@ -33,6 +33,7 @@ impl Material {
         point: &Point,
         eye_vector: &Vec4,
         normal_vector: &Vec4,
+        in_shadow: bool,
     ) -> Color {
         let (diffuse, specular, ambient);
         // combine the surface color with the light's color/intensity
@@ -41,6 +42,9 @@ impl Material {
         let light_vector = (light.position.as_ref() - point).normalize();
         // compute the ambient contribution
         ambient = self.ambient * effective_color.as_ref();
+        if in_shadow {
+            return ambient;
+        }
         //  light_dot_normal represents the cosine of the angle between the
         //  light vector and the normal vector. A negative number means the
         //  light is on the other side of the surface.

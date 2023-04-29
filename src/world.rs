@@ -1,25 +1,20 @@
+use std::io::Write;
+
 use crate::{
     canvas::Color,
     matrix::Matrix,
-    matters::{light::Light, sphere::Sphere, Intersectable, Intersection, PrerareComputation},
+    matters::{
+        camera::Camera, light::Light, material::Material, sphere::Sphere, Intersectable,
+        Intersection, PrerareComputation,
+    },
     ray::Ray,
-    vector::Point,
+    vector::{Point, Vec4},
 };
 
 pub struct World {
     pub light: Option<Light>,
     pub otherlights: Option<Vec<Light>>,
     pub spheres: Option<Vec<Sphere>>,
-}
-
-impl World {
-    pub fn new() -> Self {
-        Self {
-            light: None,
-            spheres: None,
-            otherlights: None,
-        }
-    }
 }
 
 impl Default for World {
@@ -43,6 +38,13 @@ impl Default for World {
 }
 
 impl World {
+    pub fn new() -> Self {
+        Self {
+            light: None,
+            spheres: None,
+            otherlights: None,
+        }
+    }
     pub fn world_intersect(&self, ray: &Ray) -> Vec<Intersection<Sphere>> {
         let mut xs = self
             .spheres
@@ -57,11 +59,13 @@ impl World {
     }
 
     pub fn shade_hits_sphere(&self, precomps: &mut PrerareComputation<Sphere>) -> Color {
+        let is_shadowed = self.is_shadowed(precomps.over_point.as_ref());
         let mut col = precomps.object.material.clone().lighting(
             self.light.as_ref().unwrap(),
             &precomps.point,
             &precomps.eyev,
             &precomps.normalv,
+            is_shadowed,
         );
         if let Some(lights) = self.otherlights.as_ref() {
             for light in lights {
@@ -71,6 +75,7 @@ impl World {
                         &precomps.point,
                         &precomps.eyev,
                         &precomps.normalv,
+                        is_shadowed,
                     );
             }
         }
@@ -86,50 +91,152 @@ impl World {
             Color::black()
         }
     }
-}
 
-// NOTES:
-// - hsize is the horizontal size (in pixels) of the canvas that the picture will be rendered to.
-// - vsize is the canvas’s vertical size (in pixels).
-// - field_of_view is an angle that describes how much the camera can see. When the field of view is small, the view will be “zoomed in,” magnifying a smaller area of the scene.
-// - transform is a matrix describing how the world should be oriented relative to the camera. This is usually a view transformation like you implemented in the previous section.
-
-pub struct Camera {
-    pub hsize: usize,
-    pub vsize: usize,
-    // in radians
-    pub field_of_view: f64,
-    pub transform: Matrix,
-    pub pixel_size: f64,
-    pub half_width: f64,
-    pub half_height: f64,
-}
-
-impl Camera {
-    pub fn new(hsize: usize, vsize: usize, field_of_view: f64) -> Self {
-        let mut camera = Camera {
-            hsize,
-            vsize,
-            field_of_view,
-            transform: Matrix::identity_4x4(),
-            pixel_size: 0.0,
-            half_width: 0.0,
-            half_height: 0.0,
-        };
-        let half_view = (field_of_view / 2.0).tan();
-        let aspect = hsize as f64 / vsize as f64;
-        (camera.half_width, camera.half_height) = if aspect >= 1.0 {
-            (half_view, half_view / aspect)
-        } else {
-            (half_view * aspect, half_view)
-        };
-
-        camera.pixel_size = (camera.half_width * 2.0) / camera.hsize as f64;
-        camera
+    pub fn is_shadowed(&self, point: &Point) -> bool {
+        if let Some(light) = self.light.as_ref() {
+            let v_from_light_to_point = &light.position - point;
+            let distance = v_from_light_to_point.magnitude();
+            let v_from_light_to_point_normalized = v_from_light_to_point.normalize();
+            let ray = Ray::new(point.clone(), v_from_light_to_point_normalized.clone());
+            let intersections = self.world_intersect(&ray);
+            if let Some(hit) = Sphere::hits(&intersections) {
+                if hit.distance < distance {
+                    return true;
+                }
+            }
+        }
+        // check for other light sources (if there are any)
+        if let Some(lights) = self.otherlights.as_ref() {
+            for light in lights {
+                let v_from_light_to_point = point - &light.position;
+                let distance = v_from_light_to_point.magnitude();
+                let v_from_light_to_point_normalized = v_from_light_to_point.normalize();
+                let ray = Ray::new(point.clone(), v_from_light_to_point_normalized.clone());
+                let intersections = self.world_intersect(&ray);
+                if let Some(hit) = Sphere::hits(&intersections) {
+                    if hit.distance < distance {
+                        return true;
+                    }
+                }
+            }
+        }
+        false
     }
 
-    // gives a ray starting for a pixel on camera and passing through a point (x,y) on canvas
-    pub fn ray_for_pixel(&self, x: usize, y: usize) -> Ray {
-        todo!()
+    pub fn world_to_ppm(&mut self) {
+        let mut floor = Sphere::default();
+        floor.transformation = Matrix::scaling_mat_4x4(10.0, 0.01, 10.0);
+        floor.material = Material::default();
+        floor.material.color = Color::new(1.0, 0.9, 0.9);
+        floor.material.specular = 0.0;
+
+        let mut left_wall = Sphere::default();
+        left_wall.transformation = Matrix::identity_4x4()
+            .scaling_mat_4x4_chain(10.0, 0.01, 10.0)
+            .rotation_x_mat_4x4_chain(std::f64::consts::FRAC_PI_2)
+            .rotation_y_mat_4x4_chain(-std::f64::consts::FRAC_PI_4)
+            .translation_mat_4x4_chain(0.0, 0.0, 5.0);
+        left_wall.material = floor.material.clone();
+
+        let mut right_wall = Sphere::default();
+        right_wall.transformation = Matrix::identity_4x4()
+            .scaling_mat_4x4_chain(10.0, 0.01, 10.0)
+            .rotation_x_mat_4x4_chain(std::f64::consts::FRAC_PI_2)
+            .rotation_y_mat_4x4_chain(std::f64::consts::FRAC_PI_4)
+            .translation_mat_4x4_chain(0.0, 0.0, 5.0);
+        right_wall.material = floor.material.clone();
+
+        let mut middle = Sphere::default();
+        middle.transformation = Matrix::translation_mat_4x4(-0.5, 1.0, 0.5);
+        middle.material = Material::default();
+        middle.material.color = Color::new(0.1, 1.0, 0.5);
+        middle.material.diffuse = 0.7;
+        middle.material.specular = 0.3;
+        let mut right = Sphere::default();
+        right.transformation =
+            Matrix::scaling_mat_4x4(0.5, 0.5, 0.5).translation_mat_4x4_chain(1.5, 0.5, -0.5);
+        right.material = Material::default();
+        right.material.color = Color::new(0.5, 1.0, 0.1);
+        right.material.diffuse = 0.7;
+        right.material.specular = 0.3;
+
+        let mut left = Sphere::default();
+        left.transformation =
+            Matrix::scaling_mat_4x4(0.33, 0.33, 0.33).translation_mat_4x4_chain(-1.5, 0.33, -0.75);
+        left.material = Material::default();
+        left.material.color = Color::new(1.0, 0.8, 0.1);
+        left.material.diffuse = 0.7;
+        left.material.specular = 0.3;
+
+        self.light = Some(Light::new(Point::new(-10.0, 10.0, -10.0), Color::white()));
+        self.spheres = Some(vec![floor, left_wall, right_wall, middle, right, left]);
+        let mut camera = Camera::new(300, 150, std::f64::consts::FRAC_PI_3);
+
+        camera.transform = Matrix::view_transformation(
+            Point::new(0.0, 1.5, -5.0),
+            Point::new(0.0, 1.0, 0.0),
+            Vec4::new(0.0, 1.0, 0.0),
+        );
+
+        let image = camera.render(&self);
+        let path = std::path::Path::new(".\\first_world.ppm");
+        if !path.exists() {
+            std::fs::File::create(&path).unwrap();
+        }
+        let mut file = std::fs::OpenOptions::new().write(true).open(path).unwrap();
+        file.write_all(image.to_ppm().as_bytes()).unwrap();
+    }
+
+    // working on this
+    pub fn shadow_dog_to_ppm(&mut self) {
+        let mut background = Sphere::default();
+        background.transformation = Matrix::scaling_mat_4x4(10.0, 10.0, 0.01)
+            .rotation_y_mat_4x4_chain(std::f64::consts::FRAC_PI_4)
+            .translation_mat_4x4_chain(3.0, 0.0, 3.0);
+        background.material.color = Color::new(0.3, 0.3, 0.3);
+        background.material.specular = 0.0;
+        let mut s1 = Sphere::default();
+        s1.transformation = Matrix::translation_mat_4x4(-2.0, 0.0, 0.0);
+        s1.material = Material::default();
+        s1.material.color = Color::new(1.0, 0.9, 0.9);
+
+        let mut s2 = Sphere::new(Matrix::translation_mat_4x4(0.0, 1.0, 0.0));
+        s2.material = Material::default();
+        s2.material.color = Color::new(0.5, 0.9, 0.9);
+
+        let mut f1 = Sphere::default();
+        f1.transformation =
+            Matrix::scaling_mat_4x4(0.3, 1.0, 0.3).translation_mat_4x4_chain(0.0, 1.0, 0.0);
+        f1.material = s1.material.clone();
+
+        let mut f2 = Sphere::default();
+        f2.transformation = Matrix::scaling_mat_4x4(1.0, 0.3, 0.3)
+            .rotation_z_mat_4x4_chain(std::f64::consts::FRAC_PI_2)
+            .translation_mat_4x4_chain(0.0, 2.0, 0.0);
+        f2.material = s1.material.clone();
+
+        let mut f3 = Sphere::default();
+        f3.transformation = Matrix::scaling_mat_4x4(1.0, 0.3, 0.3)
+            .rotation_z_mat_4x4_chain(std::f64::consts::FRAC_PI_2)
+            .translation_mat_4x4_chain(0.0, -2.0, 0.0);
+        f3.material = s1.material.clone();
+
+        self.light = Some(Light::new(Point::new(-10.0, 0.0, -5.0), Color::white()));
+        self.spheres = Some(vec![s1, s2, f1, f2, f3, background]);
+        let mut camera = Camera::new(300, 150, std::f64::consts::FRAC_PI_3);
+
+        camera.transform = Matrix::view_transformation(
+            Point::new(0.0, 3.0, -8.0),
+            Point::new(0.0, 1.0, 0.0),
+            Vec4::new(0.0, 1.0, 0.0),
+        );
+
+        let image = camera.render(&self);
+        let path = std::path::Path::new(".\\dog_world.ppm");
+        if !path.exists() {
+            std::fs::File::create(&path).unwrap();
+        }
+        let mut file = std::fs::OpenOptions::new().write(true).open(path).unwrap();
+        file.write_all(image.to_ppm().as_bytes()).unwrap();
     }
 }

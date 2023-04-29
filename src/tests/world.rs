@@ -4,7 +4,7 @@ use crate::{
     matters::{light::Light, sphere::Sphere, Intersectable, Intersection},
     ray::Ray,
     vector::{Point, Vec4},
-    world::{Camera, World},
+    world::World,
 };
 
 #[test]
@@ -69,22 +69,46 @@ fn shading_an_intersection_from_inside() {
 }
 
 #[test]
-fn constructing_a_camera() {
-    let camera = Camera::new(160, 120, std::f64::consts::FRAC_PI_2);
-    assert_eq!(camera.hsize, 160);
-    assert_eq!(camera.vsize, 120);
-    assert_eq!(camera.field_of_view, std::f64::consts::FRAC_PI_2);
-    assert_eq!(camera.transform, Matrix::identity_4x4());
+fn there_is_no_shadow_when_nothing_is_collinear_with_point_and_light() {
+    let world = World::default();
+    let point = Point::new(0.0, 10.0, 0.0);
+    assert_eq!(world.is_shadowed(&point), false);
 }
 
 #[test]
-fn the_pixel_size_for_a_horizontal_canvas() {
-    let camera = Camera::new(200, 125, std::f64::consts::FRAC_PI_2);
-    assert_eq!(camera.pixel_size, 0.009999999999999998);
+fn the_shadow_when_an_object_is_between_the_point_and_the_light() {
+    let world = World::default();
+    let point = Point::new(10.0, -10.0, 10.0);
+    assert_eq!(world.is_shadowed(&point), true);
 }
 
 #[test]
-fn the_pixel_size_for_a_vertical_canvas() {
-    let camera = Camera::new(125, 200, std::f64::consts::FRAC_PI_2);
-    assert_eq!(camera.pixel_size, 0.009999999999999998);
+fn there_is_no_shadow_when_an_object_is_behind_the_light() {
+    let world = World::default();
+    let point = Point::new(-20.0, 20.0, -20.0);
+    assert_eq!(world.is_shadowed(&point), false);
+}
+
+#[test]
+fn there_is_no_shadow_when_an_object_is_behind_the_point() {
+    let world = World::default();
+    let point = Point::new(-2.0, 2.0, -2.0);
+    assert_eq!(world.is_shadowed(&point), false);
+}
+
+#[test]
+fn shade_hit_is_given_an_intersection_in_shadow() {
+    let mut world = World::new();
+    world.light = Some(Light::new(
+        Point::new(0.0, 0.0, -10.0),
+        Color::new(1.0, 1.0, 1.0),
+    ));
+    let s1 = Sphere::default();
+    let s2 = Sphere::new(Matrix::translation_mat_4x4(0.0, 0.0, 10.0));
+    world.spheres = Some(vec![s1, s2.clone()]);
+    let ray = Ray::new(Point::new(0.0, 0.0, 0.5), Vec4::new(0.0, 0.0, 1.0));
+    let i = Intersection::new(4.0, s2);
+    let mut comps = Sphere::prepare_computation(&i, &ray);
+    let c = world.shade_hits_sphere(&mut comps);
+    assert_eq!(c, Color::new(0.1, 0.1, 0.1));
 }

@@ -5,6 +5,7 @@ use crate::{
     vector::{Point, Vec4},
 };
 
+pub mod camera;
 pub mod light;
 pub mod material;
 pub mod sphere;
@@ -28,6 +29,8 @@ pub struct PrerareComputation<T: Clone> {
     pub normalv: Vec4,
     // if a normal is inside object or outside
     pub inside: bool,
+    // for shadows
+    pub over_point: Point,
 }
 
 pub trait Intersectable: Clone {

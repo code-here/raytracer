@@ -1,3 +1,4 @@
+mod camera;
 mod canvas;
 mod light;
 mod material;
