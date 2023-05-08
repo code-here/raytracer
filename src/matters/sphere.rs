@@ -7,7 +7,9 @@ use crate::{
     vector::{Point, Vec4},
 };
 
-use super::{light::Light, material::Material, Intersectable, Intersection, PrerareComputation};
+use super::{
+    light::Light, material::Material, Intersectable, Intersection, PrerareComputation, Shape,
+};
 
 /// NOTES:
 /// 1. to bring some point/vector from world space to object space multiply the inverse of transformation matrix of object(sphere) with the point/vector i.e transformation.inverse() * point/vector
@@ -28,51 +30,6 @@ pub struct Sphere {
 }
 
 impl Sphere {
-    pub fn new(transformation_matrix: Matrix) -> Self {
-        let mut sphere = Self::default();
-        sphere.set_transformation(transformation_matrix);
-        sphere
-    }
-    pub fn intersect(&self, ray: &Ray) -> Vec<Intersection<Sphere>> {
-        //transform the ray from world space coordinate to object space coordinate by appling inverse of sphere transformation to the ray
-        let transformed_ray = ray.transform(self.transformation.inverse_4x4().unwrap());
-        //because there is gona be 2 point at most
-        let mut intersections = Vec::with_capacity(2);
-        // vector from sphere center to ray
-        let sphere_to_ray = transformed_ray.origin.as_ref() - self.origin.as_ref();
-        // finding discriminant
-        let a = transformed_ray
-            .direction
-            .as_ref()
-            .dot(transformed_ray.direction.as_ref());
-        let b = 2.0
-            * transformed_ray
-                .direction
-                .as_ref()
-                .dot(sphere_to_ray.as_ref());
-        let c = sphere_to_ray.as_ref().dot(sphere_to_ray.as_ref()) - 1.0;
-        let discriminant = b * b - 4.0 * a * c;
-        // if discriminant < 0 the not intersection
-        // if discriminant = 0 one intersection
-        // if discriminant > 0 two discriminants
-        if discriminant >= 0.0 {
-            // send the same point twice even if one intraction
-            intersections.push(Intersection::new(
-                (-b - discriminant.sqrt()) / (2.0 * a),
-                self.clone(),
-            ));
-            intersections.push(Intersection::new(
-                (-b + discriminant.sqrt()) / (2.0 * a),
-                self.clone(),
-            ));
-        }
-        intersections
-    }
-
-    pub fn set_transformation(&mut self, transformation_matrix: Matrix) {
-        self.transformation = transformation_matrix;
-    }
-
     pub fn simple_sphere_to_canvas(&self) {
         let mut canvas = Canvas::new(300, 300);
         let red = Color::new(1.0, 0.0, 0.0);
@@ -111,24 +68,6 @@ impl Sphere {
         }
         let mut file = std::fs::OpenOptions::new().write(true).open(path).unwrap();
         file.write_all(canvas.to_ppm().as_bytes()).unwrap();
-    }
-
-    pub fn normal_at(&self, point: &Point) -> Vec4 {
-        let world_point = point;
-        let inverse_transformation = self.transformation.inverse_4x4().unwrap();
-        // bring the world point (which we have to find normal to) into object space before calculating the normal
-        // since normal is the vector from center of sphere and point of it's surface
-        // the center of sphere (origin) is in object space
-        let object_point = inverse_transformation.as_ref() * world_point;
-        // normal in object space
-        let object_normal = object_point.as_ref() - &self.origin;
-        // convert the normal in object space to world space
-        // normally we only have to multiply sphere transfomation matrix to bring object space normal to world space
-        // not in this case
-        let mut world_normal = inverse_transformation.transpose() * object_normal;
-        // since the sphere will always be unit sphere we explicitly don't have to normalize it
-        world_normal.3 = 0.0;
-        world_normal.normalize()
     }
 
     pub fn sphere_with_lighting_to_canvas(&mut self) {
@@ -243,5 +182,63 @@ impl Intersectable for Sphere {
             inside,
             over_point,
         }
+    }
+}
+
+impl Shape for Sphere {
+    fn intersect(&self, ray: &Ray) -> Vec<Intersection<Sphere>> {
+        //transform the ray from world space coordinate to object space coordinate by appling inverse of sphere transformation to the ray
+        let transformed_ray = ray.transform(self.transformation.inverse_4x4().unwrap());
+        //because there is gona be 2 point at most
+        let mut intersections = Vec::with_capacity(2);
+        // vector from sphere center to ray
+        let sphere_to_ray = transformed_ray.origin.as_ref() - self.origin.as_ref();
+        // finding discriminant
+        let a = transformed_ray
+            .direction
+            .as_ref()
+            .dot(transformed_ray.direction.as_ref());
+        let b = 2.0
+            * transformed_ray
+                .direction
+                .as_ref()
+                .dot(sphere_to_ray.as_ref());
+        let c = sphere_to_ray.as_ref().dot(sphere_to_ray.as_ref()) - 1.0;
+        let discriminant = b * b - 4.0 * a * c;
+        // if discriminant < 0 the not intersection
+        // if discriminant = 0 one intersection
+        // if discriminant > 0 two discriminants
+        if discriminant >= 0.0 {
+            // send the same point twice even if one intraction
+            intersections.push(Intersection::new(
+                (-b - discriminant.sqrt()) / (2.0 * a),
+                self.clone(),
+            ));
+            intersections.push(Intersection::new(
+                (-b + discriminant.sqrt()) / (2.0 * a),
+                self.clone(),
+            ));
+        }
+        intersections
+    }
+    fn normal_at(&self, point: &Point) -> Vec4 {
+        let world_point = point;
+        let inverse_transformation = self.transformation.inverse_4x4().unwrap();
+        // bring the world point (which we have to find normal to) into object space before calculating the normal
+        // since normal is the vector from center of sphere and point of it's surface
+        // the center of sphere (origin) is in object space
+        let object_point = inverse_transformation.as_ref() * world_point;
+        // normal in object space
+        let object_normal = object_point.as_ref() - &self.origin;
+        // convert the normal in object space to world space
+        // normally we only have to multiply sphere transfomation matrix to bring object space normal to world space
+        // not in this case
+        let mut world_normal = inverse_transformation.transpose() * object_normal;
+        // since the sphere will always be unit sphere we explicitly don't have to normalize it
+        world_normal.3 = 0.0;
+        world_normal.normalize()
+    }
+    fn set_transformation(&mut self, transformation_matrix: Matrix) {
+        self.transformation = transformation_matrix;
     }
 }

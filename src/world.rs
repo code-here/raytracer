@@ -5,7 +5,7 @@ use crate::{
     matrix::Matrix,
     matters::{
         camera::Camera, light::Light, material::Material, sphere::Sphere, Intersectable,
-        Intersection, PrerareComputation,
+        Intersection, PrerareComputation, Shape,
     },
     ray::Ray,
     vector::{Point, Vec4},

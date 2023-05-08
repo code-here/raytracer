@@ -1,7 +1,7 @@
 use crate::{
     canvas::Color,
     matrix::Matrix,
-    matters::{light::Light, sphere::Sphere, Intersectable, Intersection},
+    matters::{light::Light, sphere::Sphere, Intersectable, Intersection, Shape},
     ray::Ray,
     vector::{Point, Vec4},
     world::World,

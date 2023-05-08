@@ -1,6 +1,6 @@
 use crate::{
     matrix::Matrix,
-    matters::{material::Material, sphere::Sphere, Intersection},
+    matters::{material::Material, sphere::Sphere, Intersection, Shape},
     ray::Ray,
     vector::{Point, Vec4},
 };

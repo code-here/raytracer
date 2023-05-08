@@ -1,6 +1,7 @@
 use std::cmp::Ordering;
 
 use crate::{
+    matrix::Matrix,
     ray::Ray,
     vector::{Point, Vec4},
 };
@@ -9,6 +10,22 @@ pub mod camera;
 pub mod light;
 pub mod material;
 pub mod sphere;
+
+pub trait Shape: Default + Clone {
+    // create a shape with a transformation
+    fn new(transformation_matrix: Matrix) -> Self {
+        let mut shape = Self::default();
+        shape.set_transformation(transformation_matrix);
+        shape
+    }
+    //transform the ray from world space coordinate to object space coordinate by appling inverse of shape transformation (self.transformation) to the ray.
+    // intersects a Shape with ray
+    fn intersect(&self, ray: &Ray) -> Vec<Intersection<Self>>;
+    // finds the normal at a point on a shape
+    fn normal_at(&self, point: &Point) -> Vec4;
+    // set transformation to the shape
+    fn set_transformation(&mut self, transformation_matrix: Matrix);
+}
 
 #[derive(Debug, Clone)]
 pub struct Intersection<T: Clone> {
